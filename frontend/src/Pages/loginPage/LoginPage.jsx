@@ -6,7 +6,7 @@ import axios from "axios";
 let apiUrl =
   import.meta.env.VITE_NODE_ENV === "production"
     ? import.meta.env.VITE_API_BASE_URL
-    : "http://localhost:3000";
+    : "https://live-polling-system-4-s4rf.onrender.com";
 const LoginPage = () => {
   const [selectedRole, setSelectedRole] = useState(null);
   const navigate = useNavigate();
