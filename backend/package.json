@@ -4,13 +4,15 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "dev": "nodemon src/app.js",
+    "build": "echo 'No build step needed'"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
