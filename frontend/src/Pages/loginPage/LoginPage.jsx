@@ -29,7 +29,7 @@ const LoginPage = () => {
   return (
     <div className="d-flex justify-content-center align-items-center vh-100">
       <div className="poll-container text-center">
-        <button className="btn btn-sm intervue-btn mb-5">
+        <button className="btn btn-sm intervue-btn mb-3">
           <img src={stars} className="px-1" alt="" />
           Intervue Poll
         </button>
@@ -37,11 +37,11 @@ const LoginPage = () => {
           Welcome to the <b>Live Polling System</b>
         </h3>
         <p className="poll-description">
-          Please select the role that best describes you to begin using the live
-          polling system
+          Please select the role that best describes you to begin using the live polling 
+          system
         </p>
 
-        <div className="d-flex justify-content-around mb-4">
+        <div className="d-flex justify-content-center mb-4" style={{gap: '17px'}}>
           <div
             className={`role-btn ${selectedRole === "student" ? "active" : ""}`}
             onClick={() => selectRole("student")}
