@@ -35,8 +35,9 @@ const StudentLandingPage = () => {
         </h3>
         <p className="landing-description">
           If you're a student, you'll be able to{" "}
-          <b style={{ color: "black" }}>submit your answers</b>, participate in
-          live polls, and see how your responses compare with your classmates
+          <b style={{ color: "black" }}>submit your answers</b>, participate in live
+          <br />
+          polls, and see how your responses compare with your classmates
         </p>
         <form onSubmit={handleStudentLogin}>
           <div className="w-50 mx-auto my-4">
