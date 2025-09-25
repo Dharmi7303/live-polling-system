@@ -95,54 +95,56 @@ const TeacherLandingPage = () => {
       </button>
       <div className="container my-4 w-75 ms-5">
         <button className="btn btn-sm intervue-btn mb-3">
-          <img src={stars} alt="Poll Icon" /> Intervue Poll
+          <img src={stars} className="px-1" alt="Poll Icon" />
+          Intervue Poll
         </button>
 
-        <h2 className="fw-bold">
-          Let's <strong>Get Started</strong>
+        <h2 className="teacher-title">
+          Let's <b>Get Started</b>
         </h2>
-        <p>
+        <p className="teacher-info">
           <b>Teacher: </b>
           {username}
         </p>
-        <p className="text-muted">
-          You'll have the ability to create and manage polls, ask questions, and
-          monitor your students' responses in real-time.
+        <p className="teacher-description">
+          you'll have the ability to create and manage polls, ask questions, and
+          monitor
+          <br />
+          your students' responses in real-time.
         </p>
 
         {error && <div className="alert alert-danger">{error}</div>}
 
         <div className="mb-4">
-          <div className="d-flex justify-content-between pb-3">
+          <div className="form-header-row">
             <label htmlFor="question" className="form-label">
               Enter your question
             </label>
             <select
-              className="form-select w-auto ms-3"
+              className="form-select"
               value={timer}
               onChange={handleTimerChange}
             >
               <option value="60">60 seconds</option>
-              <option value="30">30 seconds</option>
-              <option value="90">90 seconds</option>
+              <option value="90">30 seconds</option>
             </select>
           </div>
-          <input
-            type="text"
-            id="question"
-            className="form-control"
-            onChange={handleQuestionChange}
-            rows="3"
-            maxLength="100"
-            placeholder="Type your question..."
-          ></input>
-          <div className="text-end text-muted mt-1">{question.length}/100</div>
+          <div className="question-container">
+            <textarea
+              id="question"
+              className="form-control"
+              onChange={handleQuestionChange}
+              maxLength="100"
+              placeholder="Type your question..."
+            ></textarea>
+            <div className="character-counter">{question.length}/100</div>
+          </div>
         </div>
 
         <div className="mb-4">
-          <div className="d-flex justify-content-between pb-3">
+          <div className="form-header-row">
             <label className="form-label">Edit Options</label>
-            <label className="form-label">Is it correct?</label>
+            <label className="form-label correct-label">Is it correct?</label>
           </div>
           {options.map((option, index) => (
             <div key={option.id} className="d-flex align-items-center mb-2">

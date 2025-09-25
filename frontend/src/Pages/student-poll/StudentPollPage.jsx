@@ -6,6 +6,7 @@ import stopwatch from "../../assets/stopwatch.svg";
 import ChatPopover from "../../components/chat/ChatPopover";
 import { useNavigate } from "react-router-dom";
 import stars from "../../assets/spark.svg";
+import KickedOutPage from "../kicked-out/KickedOutPage";
 let apiUrl =
   import.meta.env.VITE_NODE_ENV === "production"
     ? import.meta.env.VITE_API_BASE_URL
@@ -21,10 +22,18 @@ const StudentPollPage = () => {
   const [pollOptions, setPollOptions] = useState([]);
   const [pollId, setPollId] = useState("");
   const [kickedOut, setKickedOut] = useState(false);
+  const [questionNumber, setQuestionNumber] = useState(0);
   const timerRef = useRef(null);
   const navigate = useNavigate();
 
   const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0);
+
+  // Format timer as mm:ss
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handleOptionSelect = (option) => {
     setSelectedOption(option);
@@ -50,7 +59,6 @@ const StudentPollPage = () => {
     const handleKickedOut = () => {
       setKickedOut(true);
       sessionStorage.removeItem("username");
-      navigate("/kicked-out");
     };
 
     socket.on("kickedOut", handleKickedOut);
@@ -69,6 +77,7 @@ const StudentPollPage = () => {
       setSelectedOption(null);
       setTimeLeft(pollData.timer);
       setPollId(pollData._id);
+      setQuestionNumber(prevNum => prevNum + 1);
     });
 
     socket.on("pollResults", (updatedVotes) => {
@@ -116,7 +125,7 @@ const StudentPollPage = () => {
     <>
       <ChatPopover />
       {kickedOut ? (
-        <div>kicked</div>
+        <KickedOutPage />
       ) : (
         <>
           {" "}
@@ -143,78 +152,53 @@ const StudentPollPage = () => {
           {pollQuestion !== "" && (
             <div className="container mt-5 w-50">
               <div className="d-flex align-items-center mb-4">
-                <h5 className="m-0 pe-5">Question</h5>
+                <h5 className="m-0 pe-5">Question {questionNumber}</h5>
                 <img
                   src={stopwatch}
                   width="15px"
                   height="auto"
                   alt="Stopwatch"
                 />
-                <span className="ps-2 ml-2 text-danger">{timeLeft}s</span>
+                <span className="ps-2 ml-2 text-danger">{formatTime(timeLeft)}</span>
               </div>
-              <div className="card">
-                <div className="card-body">
-                  <h6 className="question py-2 ps-2 float-left rounded text-white">
-                    {pollQuestion}?
-                  </h6>
-                  <div className="list-group mt-4">
-                    {pollOptions.map((option) => (
-                      <div
-                        key={option.id}
-                        className={`list-group-item rounded m-1 ${
-                          selectedOption === option.text
-                            ? "border option-border"
-                            : ""
-                        }`}
+              <div className="poll-results-container">
+                <div className="poll-question-header">
+                  {pollQuestion}?
+                </div>
+                <div className="poll-options-list">
+                  {pollOptions.map((option, index) => (
+                    <div
+                      key={option.id}
+                      className={`poll-option-result ${
+                        !submitted && timeLeft > 0 ? 'poll-option-clickable' : ''
+                      } ${
+                        selectedOption === option.text ? 'selected-option' : ''
+                      } ${
+                        submitted && selectedOption === option.text ? 'selected' : ''
+                      }`}
+                      onClick={() => {
+                        if (!submitted && timeLeft > 0) {
+                          handleOptionSelect(option.text);
+                        }
+                      }}
+                    >
+                      <div 
+                        className="option-progress-bg" 
                         style={{
-                          padding: "10px",
-                          cursor:
-                            submitted || timeLeft === 0
-                              ? "not-allowed"
-                              : "pointer",
+                          width: submitted ? `${calculatePercentage(votes[option.text] || 0)}%` : '0%'
                         }}
-                        onClick={() => {
-                          if (!submitted && timeLeft > 0) {
-                            handleOptionSelect(option.text);
-                          }
-                        }}
-                      >
-                        <div className="d-flex justify-content-between align-items-center">
-                          <span
-                            className={`ml-2 text-left ${
-                              submitted ? "font-weight-bold" : ""
-                            }`}
-                          >
-                            {option.text}
-                          </span>
-                          {submitted && (
-                            <span className="text-right">
-                              {Math.round(
-                                calculatePercentage(votes[option.text] || 0)
-                              )}
-                              %
-                            </span>
-                          )}
-                        </div>
-                        {submitted && (
-                          <div className="progress mt-2">
-                            <div
-                              className="progress-bar progress-bar-bg"
-                              role="progressbar"
-                              style={{
-                                width: `${calculatePercentage(
-                                  votes[option.text] || 0
-                                )}%`,
-                              }}
-                              aria-valuenow={votes[option.text] || 0}
-                              aria-valuemin="0"
-                              aria-valuemax="100"
-                            ></div>
-                          </div>
-                        )}
+                      />
+                      <div className="option-number">
+                        {index + 1}
                       </div>
-                    ))}
-                  </div>
+                      <div className="option-text">
+                        {option.text}
+                      </div>
+                      <div className="option-percentage">
+                        {submitted ? `${Math.round(calculatePercentage(votes[option.text] || 0))}%` : ''}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 

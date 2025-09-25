@@ -5,6 +5,7 @@ import StudentLandingPage from "./Pages/student-landing/StudentLandingPage";
 import StudentPollPage from "./Pages/student-poll/StudentPollPage";
 import TeacherPollPage from "./Pages/teacher-poll/TeacherPollPage";
 import PollHistoryPage from "./Pages/poll-history/PollHistory";
+import KickedOutPage from "./Pages/kicked-out/KickedOutPage";
 import TeacherProtectedRoute from "./components/route-protect/TeacherProtect";
 import StudentProtectedRoute from "./components/route-protect/StudentProtect";
 
@@ -47,6 +48,7 @@ function App() {
             </TeacherProtectedRoute>
           }
         />
+        <Route path="/kicked-out" element={<KickedOutPage />} />
       </Routes>
     </BrowserRouter>
   );
