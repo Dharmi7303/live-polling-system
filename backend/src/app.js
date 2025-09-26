@@ -13,36 +13,10 @@ const {
 
 const app = express();
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (process.env.NODE_ENV === "production") {
-      // Allow any Vercel deployment for this project
-      if (origin.includes("live-polling-system") && origin.includes("vercel.app")) {
-        return callback(null, true);
-      }
-      // Also allow the specific domains we know
-      const allowedOrigins = [
-        "https://live-polling-system-frontend-4nrh3inac-dharmi7303s-projects.vercel.app", 
-        "https://live-polling-system-git-main-dharmi7303s-projects.vercel.app",
-        "https://live-polling-system-9rs7x131g-dharmi7303s-projects.vercel.app",
-        "https://live-polling-system-frontend-two.vercel.app"
-      ];
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-    } else {
-      // Development origins
-      const devOrigins = ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"];
-      if (devOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-    }
-    
-    callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true
+  origin: "*", // Allow all origins for now to ensure deployment works
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 app.use(express.json());
 
@@ -72,25 +46,7 @@ mongoose
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: function (origin, callback) {
-      // Allow requests with no origin
-      if (!origin) return callback(null, true);
-      
-      if (process.env.NODE_ENV === "production") {
-        // Allow any Vercel deployment for this project
-        if (origin.includes("live-polling-system") && origin.includes("vercel.app")) {
-          return callback(null, true);
-        }
-      } else {
-        // Development origins
-        const devOrigins = ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"];
-        if (devOrigins.includes(origin)) {
-          return callback(null, true);
-        }
-      }
-      
-      callback(null, true); // Allow all for Socket.IO as fallback
-    },
+    origin: "*",
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -158,7 +114,12 @@ app.get("/", (req, res) => {
 
 app.post("/teacher-login", (req, res) => {
   console.log("Teacher login endpoint hit");
-  TeacherLogin(req, res);
+  try {
+    TeacherLogin(req, res);
+  } catch (error) {
+    console.error("Teacher login error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 app.get("/health", (req, res) => {
@@ -176,4 +137,6 @@ app.get("/polls/:teacherUsername", (req, res) => {
 
 server.listen(port, () => {
   console.log(`Server running on port ${port}...`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Database URL configured: ${DB ? 'Yes' : 'No'}`);
 });
