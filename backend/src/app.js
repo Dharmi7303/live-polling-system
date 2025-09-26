@@ -36,35 +36,55 @@ app.use(express.json());
 
 const port = process.env.PORT || 3000;
 
+// URL encode the password to handle special characters
+const MONGO_PASSWORD = "Y2GCc4UizPrinVik";
 const DB =
   process.env.NODE_ENV === "production"
-    ? process.env.MONGODB_URL || "mongodb+srv://dharmijaviya_db_user:Y2GCc4UizPrinVik@livepollintervue.ov60ktd.mongodb.net/livepollintervue?retryWrites=true&w=majority"
-    : "mongodb+srv://dharmijaviya_db_user:Y2GCc4UizPrinVik@livepollintervue.ov60ktd.mongodb.net/livepollintervue?retryWrites=true&w=majority";
+    ? process.env.MONGODB_URL || `mongodb+srv://dharmijaviya_db_user:${encodeURIComponent(MONGO_PASSWORD)}@livepollintervue.ov60ktd.mongodb.net/livepollintervue?retryWrites=true&w=majority`
+    : `mongodb+srv://dharmijaviya_db_user:${encodeURIComponent(MONGO_PASSWORD)}@livepollintervue.ov60ktd.mongodb.net/livepollintervue?retryWrites=true&w=majority`;
 
 console.log("Attempting to connect to MongoDB...");
 console.log("Database URL:", DB.replace(/([^:]*:\/\/[^:]*:)([^@]*)(@.*)/, '$1****$3'));
 
 let isMongoConnected = false;
+let connectionRetries = 0;
+const MAX_RETRIES = 3;
 
-mongoose
-  .connect(DB, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 15000, // Increased timeout
-    socketTimeoutMS: 45000,
-    connectTimeoutMS: 15000,
-    bufferCommands: false, // Disable buffering to get immediate feedback
-    bufferMaxEntries: 0,
-  })
-  .then(() => {
+const connectToMongoDB = async () => {
+  try {
+    console.log(`Connection attempt ${connectionRetries + 1}/${MAX_RETRIES}`);
+    
+    await mongoose.connect(DB, {
+      serverSelectionTimeoutMS: 20000, // Increase timeout for slow networks
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 20000,
+      maxPoolSize: 10, // Maintain up to 10 socket connections
+      serverSelectionRetryDelayMS: 2000, // Retry every 2 seconds
+      heartbeatFrequencyMS: 10000,
+      bufferCommands: false,
+      bufferMaxEntries: 0,
+    });
+    
     console.log("✅ Connected to MongoDB successfully");
     isMongoConnected = true;
-  })
-  .catch((e) => {
-    console.error("❌ Failed to connect to MongoDB:", e.message);
-    console.log("Server will continue running without database connection");
+    connectionRetries = 0; // Reset on successful connection
+  } catch (error) {
+    console.error("❌ Failed to connect to MongoDB:", error.message);
     isMongoConnected = false;
-  });
+    
+    if (connectionRetries < MAX_RETRIES - 1) {
+      connectionRetries++;
+      console.log(`Retrying connection in 5 seconds... (${connectionRetries}/${MAX_RETRIES})`);
+      setTimeout(connectToMongoDB, 5000);
+    } else {
+      console.log("Maximum retry attempts reached. Server will continue running without database connection");
+      connectionRetries = 0;
+    }
+  }
+};
+
+// Initial connection attempt
+connectToMongoDB();
 
 // Monitor connection status
 mongoose.connection.on('connected', () => {
@@ -73,13 +93,25 @@ mongoose.connection.on('connected', () => {
 });
 
 mongoose.connection.on('error', (err) => {
-  console.error('❌ Mongoose connection error:', err);
+  console.error('❌ Mongoose connection error:', err.message);
   isMongoConnected = false;
+  
+  // Attempt to reconnect on error
+  setTimeout(() => {
+    console.log('Attempting to reconnect due to connection error...');
+    connectToMongoDB();
+  }, 10000);
 });
 
 mongoose.connection.on('disconnected', () => {
   console.log('⚠️ Mongoose disconnected from MongoDB');
   isMongoConnected = false;
+  
+  // Attempt to reconnect on disconnect
+  setTimeout(() => {
+    console.log('Attempting to reconnect due to disconnection...');
+    connectToMongoDB();
+  }, 5000);
 });
 
 // Export connection status for other modules
