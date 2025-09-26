@@ -38,8 +38,11 @@ const port = process.env.PORT || 3000;
 
 const DB =
   process.env.NODE_ENV === "production"
-    ? process.env.MONGODB_URL || "mongodb+srv://dharmijaviya_db_user:Y2GCc4UizPrinVik@livepollintervue.ov60ktd.mongodb.net/livepoll?retryWrites=true&w=majority"
-    : "mongodb+srv://dharmijaviya_db_user:Y2GCc4UizPrinVik@livepollintervue.ov60ktd.mongodb.net/livepoll?retryWrites=true&w=majority";
+    ? process.env.MONGODB_URL || "mongodb+srv://dharmijaviya_db_user:Y2GCc4UizPrinVik@livepollintervue.ov60ktd.mongodb.net/livepollintervue?retryWrites=true&w=majority"
+    : "mongodb+srv://dharmijaviya_db_user:Y2GCc4UizPrinVik@livepollintervue.ov60ktd.mongodb.net/livepollintervue?retryWrites=true&w=majority";
+
+console.log("Attempting to connect to MongoDB...");
+console.log("Database URL:", DB.replace(/([^:]*:\/\/[^:]*:)([^@]*)(@.*)/, '$1****$3'));
 
 let isMongoConnected = false;
 
@@ -47,20 +50,37 @@ mongoose
   .connect(DB, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 10000, // Increased timeout
+    serverSelectionTimeoutMS: 15000, // Increased timeout
     socketTimeoutMS: 45000,
-    bufferCommands: true, // Re-enable buffering to prevent timing issues
+    connectTimeoutMS: 15000,
+    bufferCommands: false, // Disable buffering to get immediate feedback
     bufferMaxEntries: 0,
   })
   .then(() => {
-    console.log("Connected to MongoDB successfully");
+    console.log("✅ Connected to MongoDB successfully");
     isMongoConnected = true;
   })
   .catch((e) => {
-    console.error("Failed to connect to MongoDB:", e.message);
+    console.error("❌ Failed to connect to MongoDB:", e.message);
     console.log("Server will continue running without database connection");
     isMongoConnected = false;
   });
+
+// Monitor connection status
+mongoose.connection.on('connected', () => {
+  console.log('✅ Mongoose connected to MongoDB');
+  isMongoConnected = true;
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('❌ Mongoose connection error:', err);
+  isMongoConnected = false;
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('⚠️ Mongoose disconnected from MongoDB');
+  isMongoConnected = false;
+});
 
 // Export connection status for other modules
 module.exports.isMongoConnected = () => isMongoConnected;
@@ -142,6 +162,18 @@ app.get("/test", (req, res) => {
   res.json({
     message: "Test endpoint working",
     cors: "enabled",
+    mongoConnected: isMongoConnected,
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get("/debug", (req, res) => {
+  res.json({
+    message: "Debug endpoint",
+    environment: process.env.NODE_ENV || "development",
+    mongoConnected: isMongoConnected,
+    mongoUrl: DB ? "configured" : "not configured",
+    hasMongodbUrl: !!process.env.MONGODB_URL,
     timestamp: new Date().toISOString()
   });
 });
