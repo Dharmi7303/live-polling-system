@@ -13,11 +13,35 @@ const {
 
 const app = express();
 app.use(cors({
-  origin: process.env.NODE_ENV === "production" 
-    ? ["https://live-polling-system-frontend-4nrh3inac-dharmi7303s-projects.vercel.app", 
-       "https://live-polling-system-git-main-dharmi7303s-projects.vercel.app",
-       "https://live-polling-system-9rs7x131g-dharmi7303s-projects.vercel.app"]
-    : ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (process.env.NODE_ENV === "production") {
+      // Allow any Vercel deployment for this project
+      if (origin.includes("live-polling-system") && origin.includes("vercel.app")) {
+        return callback(null, true);
+      }
+      // Also allow the specific domains we know
+      const allowedOrigins = [
+        "https://live-polling-system-frontend-4nrh3inac-dharmi7303s-projects.vercel.app", 
+        "https://live-polling-system-git-main-dharmi7303s-projects.vercel.app",
+        "https://live-polling-system-9rs7x131g-dharmi7303s-projects.vercel.app",
+        "https://live-polling-system-frontend-two.vercel.app"
+      ];
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+    } else {
+      // Development origins
+      const devOrigins = ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"];
+      if (devOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -48,7 +72,25 @@ mongoose
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: function (origin, callback) {
+      // Allow requests with no origin
+      if (!origin) return callback(null, true);
+      
+      if (process.env.NODE_ENV === "production") {
+        // Allow any Vercel deployment for this project
+        if (origin.includes("live-polling-system") && origin.includes("vercel.app")) {
+          return callback(null, true);
+        }
+      } else {
+        // Development origins
+        const devOrigins = ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"];
+        if (devOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+      }
+      
+      callback(null, true); // Allow all for Socket.IO as fallback
+    },
     methods: ["GET", "POST"],
     credentials: true,
   },
