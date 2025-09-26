@@ -12,7 +12,12 @@ const {
 } = require("../src/controllers/poll");
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === "production" 
+    ? ["https://live-polling-system-frontend-4nrh3inac-dharmi7303s-projects.vercel.app", "https://live-polling-system-git-main-dharmi7303s-projects.vercel.app"]
+    : ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
+  credentials: true
+}));
 app.use(express.json());
 
 const port = process.env.PORT || 3000;
@@ -20,7 +25,7 @@ const port = process.env.PORT || 3000;
 const DB =
   process.env.NODE_ENV === "production"
     ? process.env.MONGODB_URL
-    : "mongodb://localhost:27017/intevuePoll";
+    : "mongodb+srv://dharmijaviya_db_user:Y2GCc4UizPrinVik@livepollintervue.ov60ktd.mongodb.net/";
 
 mongoose
   .connect(DB)
@@ -97,14 +102,24 @@ io.on("connection", (socket) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Polling System Backend");
+  res.send("Polling System Backend - Server is running!");
 });
 
 app.post("/teacher-login", (req, res) => {
+  console.log("Teacher login endpoint hit");
   TeacherLogin(req, res);
 });
 
+app.get("/health", (req, res) => {
+  res.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || "development"
+  });
+});
+
 app.get("/polls/:teacherUsername", (req, res) => {
+  console.log("Polls endpoint hit for:", req.params.teacherUsername);
   getPolls(req, res);
 });
 
