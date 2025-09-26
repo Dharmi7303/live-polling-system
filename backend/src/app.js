@@ -14,7 +14,9 @@ const {
 const app = express();
 app.use(cors({
   origin: process.env.NODE_ENV === "production" 
-    ? ["https://live-polling-system-frontend-4nrh3inac-dharmi7303s-projects.vercel.app", "https://live-polling-system-git-main-dharmi7303s-projects.vercel.app"]
+    ? ["https://live-polling-system-frontend-4nrh3inac-dharmi7303s-projects.vercel.app", 
+       "https://live-polling-system-git-main-dharmi7303s-projects.vercel.app",
+       "https://live-polling-system-9rs7x131g-dharmi7303s-projects.vercel.app"]
     : ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
   credentials: true
 }));
@@ -24,16 +26,23 @@ const port = process.env.PORT || 3000;
 
 const DB =
   process.env.NODE_ENV === "production"
-    ? process.env.MONGODB_URL
-    : "mongodb+srv://dharmijaviya_db_user:Y2GCc4UizPrinVik@livepollintervue.ov60ktd.mongodb.net/";
+    ? process.env.MONGODB_URL || "mongodb+srv://dharmijaviya_db_user:Y2GCc4UizPrinVik@livepollintervue.ov60ktd.mongodb.net/?retryWrites=true&w=majority"
+    : "mongodb+srv://dharmijaviya_db_user:Y2GCc4UizPrinVik@livepollintervue.ov60ktd.mongodb.net/?retryWrites=true&w=majority";
 
 mongoose
-  .connect(DB)
+  .connect(DB, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+    socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+  })
   .then(() => {
-    console.log("Connected to MongoDB");
+    console.log("Connected to MongoDB successfully");
   })
   .catch((e) => {
-    console.error("Failed to connect to MongoDB:", e);
+    console.error("Failed to connect to MongoDB:", e.message);
+    // Don't exit the process, let the app run without DB for now
+    console.log("Server will continue running without database connection");
   });
 
 const server = http.createServer(app);
