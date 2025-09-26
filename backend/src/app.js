@@ -18,6 +18,20 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
+
+// Add explicit CORS middleware for all routes
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
 app.use(express.json());
 
 const port = process.env.PORT || 3000;
@@ -109,7 +123,19 @@ io.on("connection", (socket) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Polling System Backend - Server is running!");
+  res.json({
+    message: "Polling System Backend - Server is running!",
+    timestamp: new Date().toISOString(),
+    status: "healthy"
+  });
+});
+
+app.get("/test", (req, res) => {
+  res.json({
+    message: "Test endpoint working",
+    cors: "enabled",
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.post("/teacher-login", (req, res) => {
@@ -118,7 +144,11 @@ app.post("/teacher-login", (req, res) => {
     TeacherLogin(req, res);
   } catch (error) {
     console.error("Teacher login error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ 
+      error: "Internal server error",
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
