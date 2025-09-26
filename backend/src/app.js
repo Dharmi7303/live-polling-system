@@ -41,23 +41,29 @@ const DB =
     ? process.env.MONGODB_URL || "mongodb+srv://dharmijaviya_db_user:Y2GCc4UizPrinVik@livepollintervue.ov60ktd.mongodb.net/livepoll?retryWrites=true&w=majority"
     : "mongodb+srv://dharmijaviya_db_user:Y2GCc4UizPrinVik@livepollintervue.ov60ktd.mongodb.net/livepoll?retryWrites=true&w=majority";
 
+let isMongoConnected = false;
+
 mongoose
   .connect(DB, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-    socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
-    bufferCommands: false, // Disable mongoose buffering
-    bufferMaxEntries: 0, // Disable mongoose buffering
+    serverSelectionTimeoutMS: 10000, // Increased timeout
+    socketTimeoutMS: 45000,
+    bufferCommands: true, // Re-enable buffering to prevent timing issues
+    bufferMaxEntries: 0,
   })
   .then(() => {
     console.log("Connected to MongoDB successfully");
+    isMongoConnected = true;
   })
   .catch((e) => {
     console.error("Failed to connect to MongoDB:", e.message);
-    // Don't exit the process, let the app run without DB for now
     console.log("Server will continue running without database connection");
+    isMongoConnected = false;
   });
+
+// Export connection status for other modules
+module.exports.isMongoConnected = () => isMongoConnected;
 
 const server = http.createServer(app);
 const io = new Server(server, {

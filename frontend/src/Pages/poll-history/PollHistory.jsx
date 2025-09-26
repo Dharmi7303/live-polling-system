@@ -19,9 +19,13 @@ const PollHistoryPage = () => {
 
       try {
         const response = await axios.get(`${apiUrl}/polls/${username}`);
-        setPolls(response.data.data);
+        console.log("Polls response:", response.data);
+        // Handle both possible response structures
+        const pollsData = response.data.polls || response.data.data || [];
+        setPolls(Array.isArray(pollsData) ? pollsData : []);
       } catch (error) {
         console.error("Error fetching polls:", error);
+        setPolls([]); // Set empty array on error
       }
     };
 
@@ -50,10 +54,15 @@ const PollHistoryPage = () => {
         />{" "}
         View <b>Poll History</b>
       </div>
-      {polls.length > 0 ? (
+      {polls && polls.length > 0 ? (
         polls.map((poll) => {
+          // Safety checks for poll data
+          if (!poll || !poll.options || !Array.isArray(poll.options)) {
+            return null; // Skip invalid poll data
+          }
+          
           const totalVotes = poll.options.reduce(
-            (sum, option) => sum + option.votes,
+            (sum, option) => sum + (option.votes || 0),
             0
           );
 
@@ -66,16 +75,16 @@ const PollHistoryPage = () => {
                     {poll.question} ?
                   </h6>
                   <div className="list-group mt-4">
-                    {poll.options.map((option) => (
+                    {poll.options && poll.options.length > 0 ? poll.options.map((option) => (
                       <div
-                        key={option._id}
+                        key={option._id || Math.random()}
                         className="list-group-item rounded m-2"
                       >
                         <div className="d-flex justify-content-between align-items-center">
-                          <span>{option.text}</span>
+                          <span>{option.text || option}</span>
                           <span>
                             {Math.round(
-                              calculatePercentage(option.votes, totalVotes)
+                              calculatePercentage(option.votes || 0, totalVotes)
                             )}
                             %
                           </span>
@@ -86,17 +95,19 @@ const PollHistoryPage = () => {
                             role="progressbar"
                             style={{
                               width: `${calculatePercentage(
-                                option.votes,
+                                option.votes || 0,
                                 totalVotes
                               )}%`,
                             }}
-                            aria-valuenow={option.votes}
+                            aria-valuenow={option.votes || 0}
                             aria-valuemin="0"
                             aria-valuemax="100"
                           ></div>
                         </div>
                       </div>
-                    ))}
+                    )) : (
+                      <div className="text-muted">No options available</div>
+                    )}
                   </div>
                 </div>
               </div>
