@@ -38,8 +38,8 @@ const port = process.env.PORT || 3000;
 
 const DB =
   process.env.NODE_ENV === "production"
-    ? process.env.MONGODB_URL || "mongodb+srv://dharmijaviya_db_user:Y2GCc4UizPrinVik@livepollintervue.ov60ktd.mongodb.net/?retryWrites=true&w=majority"
-    : "mongodb+srv://dharmijaviya_db_user:Y2GCc4UizPrinVik@livepollintervue.ov60ktd.mongodb.net/?retryWrites=true&w=majority";
+    ? process.env.MONGODB_URL || "mongodb+srv://dharmijaviya_db_user:Y2GCc4UizPrinVik@livepollintervue.ov60ktd.mongodb.net/livepoll?retryWrites=true&w=majority"
+    : "mongodb+srv://dharmijaviya_db_user:Y2GCc4UizPrinVik@livepollintervue.ov60ktd.mongodb.net/livepoll?retryWrites=true&w=majority";
 
 mongoose
   .connect(DB, {
@@ -47,6 +47,8 @@ mongoose
     useUnifiedTopology: true,
     serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
     socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+    bufferCommands: false, // Disable mongoose buffering
+    bufferMaxEntries: 0, // Disable mongoose buffering
   })
   .then(() => {
     console.log("Connected to MongoDB successfully");
