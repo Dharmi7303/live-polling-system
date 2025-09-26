@@ -55,11 +55,11 @@ const connectToMongoDB = async () => {
     console.log(`Connection attempt ${connectionRetries + 1}/${MAX_RETRIES}`);
     
     await mongoose.connect(DB, {
-      serverSelectionTimeoutMS: 20000, // Increase timeout for slow networks
-      socketTimeoutMS: 45000,
-      connectTimeoutMS: 20000,
-      maxPoolSize: 10, // Maintain up to 10 socket connections
-      heartbeatFrequencyMS: 10000,
+      serverSelectionTimeoutMS: 10000, // Reduced timeout to fail faster
+      socketTimeoutMS: 30000,
+      connectTimeoutMS: 10000,
+      maxPoolSize: 5, // Reduced pool size
+      heartbeatFrequencyMS: 30000,
       bufferCommands: false,
     });
     
@@ -68,21 +68,25 @@ const connectToMongoDB = async () => {
     connectionRetries = 0; // Reset on successful connection
   } catch (error) {
     console.error("❌ Failed to connect to MongoDB:", error.message);
+    console.error("Full error:", error);
     isMongoConnected = false;
     
     if (connectionRetries < MAX_RETRIES - 1) {
       connectionRetries++;
-      console.log(`Retrying connection in 5 seconds... (${connectionRetries}/${MAX_RETRIES})`);
-      setTimeout(connectToMongoDB, 5000);
+      console.log(`Retrying connection in 10 seconds... (${connectionRetries}/${MAX_RETRIES})`);
+      setTimeout(connectToMongoDB, 10000);
     } else {
-      console.log("Maximum retry attempts reached. Server will continue running without database connection");
+      console.log("Maximum retry attempts reached. Server will continue with mock data only");
       connectionRetries = 0;
     }
   }
 };
 
-// Initial connection attempt
-connectToMongoDB();
+// Start MongoDB connection in background - don't block server startup
+setTimeout(() => {
+  console.log("Starting MongoDB connection attempt...");
+  connectToMongoDB();
+}, 1000);
 
 // Monitor connection status
 mongoose.connection.on('connected', () => {
@@ -240,7 +244,11 @@ app.get("/polls/:teacherUsername", (req, res) => {
 });
 
 server.listen(port, () => {
-  console.log(`Server running on port ${port}...`);
+  console.log(`🚀 Server running on port ${port}!`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Database URL configured: ${DB ? 'Yes' : 'No'}`);
+  console.log(`Server started successfully at ${new Date().toISOString()}`);
+  
+  // Basic health check to ensure server is responsive
+  console.log("✅ Express server is ready to accept connections");
 });
