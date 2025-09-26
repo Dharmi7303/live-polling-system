@@ -59,10 +59,8 @@ const connectToMongoDB = async () => {
       socketTimeoutMS: 45000,
       connectTimeoutMS: 20000,
       maxPoolSize: 10, // Maintain up to 10 socket connections
-      serverSelectionRetryDelayMS: 2000, // Retry every 2 seconds
       heartbeatFrequencyMS: 10000,
       bufferCommands: false,
-      bufferMaxEntries: 0,
     });
     
     console.log("✅ Connected to MongoDB successfully");
