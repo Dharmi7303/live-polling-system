@@ -200,12 +200,16 @@ app.get("/test", (req, res) => {
 });
 
 app.get("/debug", (req, res) => {
+  const { getMockPollsStatus } = require("./controllers/poll");
+  const mockPollsInfo = getMockPollsStatus();
+  
   res.json({
     message: "Debug endpoint",
     environment: process.env.NODE_ENV || "development",
     mongoConnected: isMongoConnected,
     mongoUrl: DB ? "configured" : "not configured",
     hasMongodbUrl: !!process.env.MONGODB_URL,
+    mockPolls: mockPollsInfo,
     timestamp: new Date().toISOString()
   });
 });
